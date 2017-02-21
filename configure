@@ -1,0 +1,159 @@
+#!/bin/bash
+# Automatic make file configuration script
+
+# Project information
+SOURCE_DIR=src
+INCLUDE_DIR=include
+BUILD_DIR=build
+OUTPUT=Makefile
+PROJECT=$(basename "$PWD")
+
+# Build machine and compiler information
+CC=$(which cc)
+CMACHINE=$(cc -dumpmachine)
+CVERSION=$(cc -dumpversion)
+ARCH=$(uname -m)
+OS=$(uname -s)
+STDC_VERSION=""
+
+# Configuration information
+CONFIG_DIR=.config
+CTEST=test.c
+LOG=log
+
+# Determine what version of standard C library we support
+stdc_ver() {
+cat << END_STDC > $CONFIG_DIR/$CTEST
+#include <stdio.h>
+int main(int argc, char** argv) {
+	printf("%ld", __STDC_VERSION__);
+	return 0;
+}
+END_STDC
+
+	$CC $CONFIG_DIR/$CTEST
+	STDC_VERSION=$(./a.out)
+	rm ./a.out
+}
+
+# Create a makefile
+create_makefile() {
+cat << EOF > $OUTPUT
+#!/usr/bin/make
+# Makefile automatically generated using $0 $@ 
+# $(date +"%F")
+
+# Build machine specs
+export MACHINE  = $CMACHINE
+export ARCH     = $ARCH
+
+# C compiler information
+export CC       = $CC
+export CCVER    = $CVERSION
+export STDC_VER = $STDC_VERSION
+export CFLAGS   = -O2 -Wall -Wextra
+
+# Project information
+export PROJECT  = $PROJECT
+export VERSION  = 0.1.0
+
+EOF
+cat << 'EOF' >> $OUTPUT
+# Build information
+export SRC_DIR  = src
+export INC_DIR  = include
+export BUILD    = build
+export HEADERS  = $(wildcard $(INC_DIR)/*.h)
+export SOURCE   = $(wildcard $(SRC_DIR)/*.c)
+export OBJECTS  = $(SOURCE:.c=.o)
+export TARGET   = $(BUILD)/$(PROJECT)
+
+.PHONY: all clean dist
+
+all: $(TARGET)
+
+clean:
+	rm -rf $(OBJECTS)
+
+dist: clean
+	@echo "creating distribution archive $(PROJECT)-$(VERSION).tar.gz"
+	@tar -cvf $(PROJECT)-$(VERSION).tar.gz configure $(BUILD) $(SRC_DIR) $(INC_DIR)
+
+%.o: %.c
+	@echo "cc $<"
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(TARGET): $(OBJECTS) $(HEADERS)
+	@echo "building $(TARGET)"
+	@$(CC) $(CFLAGS) $(OBJECTS) -o $(TARGET)
+EOF
+}
+
+create_accessories() {
+cat << ENDREADME > README.md 
+# $PROJECT-0.1.0
+
+### Building
+\`\`\`
+./configure
+make
+make install
+\`\`\`
+
+### License
+See LICENSE file
+ENDREADME
+
+cat << ENDLICENSE > LICENSE
+MIT License
+
+Copyright (c) $(date +"%Y") $(whoami)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ENDLICENSE
+
+cat << ENDIGNORE > .gitignore
+*.o
+*.a
+.config
+ENDIGNORE
+}
+
+clean() {
+	rm -rf $CONFIG_DIR
+	rm -rf $OUTPUT
+	rm -rf $BUILD_DIR
+	rm -rf README.md
+	rm -rf LICENSE
+}
+
+if [[ $1 == --clean ]]; then
+	clean
+	exit
+fi
+
+clean
+mkdir -p $CONFIG_DIR
+mkdir -p $SOURCE_DIR
+mkdir -p $INCLUDE_DIR
+mkdir -p $BUILD_DIR
+
+stdc_ver
+create_makefile
+create_accessories
