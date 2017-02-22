@@ -16,8 +16,7 @@ I like messing around with lots of little projects, and I wanted some way to sta
 mkdir my-project
 ./configure
 ```
-The project name and build target will default to my-project-0.1.0
-Running `./configure` in an empty directory will generate the following directory tree and files:
+The project name and build target will default to my-project-0.1.0, and generate the following directory tree:
 ```
 ./.config/
 ./build/
