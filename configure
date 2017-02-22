@@ -132,12 +132,12 @@ all: $(TARGET)
 clean:
 	@rm -rf $(OBJECTS)
 
-dist: $(TARGET) 
+dist: $(TARGET) clean 
 	@echo "creating distribution archive $(PROJECT)-$(VERSION).tar.gz"
 	if [ -d $(DOCS) ]; then \
-		tar -czvf $(PROJECT)-$(VERSION).tar.gz configure Makefile $(wildcard $(DOCS)/*) $(TARGET) $(SOURCE) $(HEADERS); \
+		tar -czvf $(PROJECT)-$(VERSION).tar.gz configure Makefile $(DOCS) $(TARGET) $(SRC_DIR) $(IN_DIR); \
 	else \
-		tar -czvf $(PROJECT)-$(VERSION).tar.gz configure Makefile $(TARGET) $(SOURCE) $(HEADERS); \
+		tar -czvf $(PROJECT)-$(VERSION).tar.gz configure Makefile $(TARGET) $(SRC_DIR) $(INC_DIR); \
 	fi 
 install: $(TARGET)
 	@echo "installing $(PROJECT) in $(PREFIX)"
@@ -168,7 +168,7 @@ upgrade:
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 $(TARGET): $(OBJECTS) $(HEADERS)
-	@echo "building $(TARGET)"
+	@echo "building $(PROJECT)"
 	@$(CC) $(CFLAGS) $(OBJECTS) -o $(TARGET)
 EOF
 }
