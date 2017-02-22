@@ -7,7 +7,9 @@
 SOURCE_DIR=src
 INCLUDE_DIR=include
 BUILD_DIR=build
+DOCUMENTATION=docs
 OUTPUT=Makefile
+MANPATH=""
 PROJECT=$(basename "$PWD")
 PROJECT_VER=""
 PREFIX=/usr/local/bin
@@ -16,7 +18,7 @@ PREFIX=/usr/local/bin
 CC=$(which cc)
 CMACHINE=$(cc -dumpmachine)
 CVERSION=$(cc -dumpversion)
-CFLAGS="-O2 -Wall -Werror -Wextra"
+CFLAGS=""
 ARCH=$(uname -m)
 OS=$(uname -s)
 STDC_VERSION=""
@@ -110,6 +112,8 @@ export PREFIX   = $PREFIX
 export PROJECT  = $PROJECT
 export VERSION  = $PROJECT_VER
 
+export DOCS     = $DOCUMENTATION
+export MANPATH  = $MANPATH
 EOF
 cat << 'EOF' >> $OUTPUT
 # Build information
@@ -126,16 +130,20 @@ export TARGET   = $(BUILD)/$(PROJECT)
 all: $(TARGET)
 
 clean:
-	rm -rf $(OBJECTS)
+	@rm -rf $(OBJECTS)
 
 dist: clean
 	@echo "creating distribution archive $(PROJECT)-$(VERSION).tar.gz"
-	@tar -cvf $(PROJECT)-$(VERSION).tar.gz configure $(TARGET) $(SOURCE) $(HEADERS)
+	@tar -cvfz $(PROJECT)-$(VERSION).tar.gz configure Makefile $(TARGET) $(SOURCE) $(HEADERS)
 
 install: $(TARGET)
 	@echo "installing $(PROJECT) in $(PREFIX)"
 	@cp $(TARGET) $(PREFIX)/$(PROJECT)-$(VERSION)
+	@chmod 0755 $(PREFIX)/$(PROJECT)-$(VERSION)
 	@ln -s $(PREFIX)/$(PROJECT)-$(VERSION) $(PREFIX)/$(PROJECT) 
+	if [ -f $(DOCS)/$(PROJECT).1 ]; then \
+		cp $(DOCS)/$(PROJECT).1 $(MANPATH); \
+	fi;
 
 uninstall:
 	@echo "uninstalling $(PROJECT) in $(PREFIX)"
@@ -143,6 +151,10 @@ uninstall:
 		rm -rf $(PREFIX)/$(PROJECT); \
 		rm -rf $(PREFIX)/$(PROJECT)-$(VERSION); \
 	fi
+	if [ -f $(MANPATH)/$(PROJECT).1 ]; then \
+		rm -rf $(MANPATH)/$(PROJECT).1; \
+	fi
+
 upgrade:
 	@rm -rf $(PREFIX)/$(PROJECT)
 	@cp $(TARGET) $(PREFIX)/$(PROJECT)-$(VERSION)
@@ -209,9 +221,47 @@ ENDIGNORE
 fi
 }
 
+manpage() {
+	cat << ENDMAN1 > $DOCUMENTATION/$PROJECT.1
+.TH ${PROJECT^^} 1
+.SH NAME
+$PROJECT \- project description
+.SH SYNOPSIS
+.B $PROJECT
+[\fB\-\-option1\fR]
+[\fB\-\-option2\fR]
+[\fB\-\-option3\fR \fIfile\fR]
+.SH DESCRIPTION
+Longform project description
+.SH OPTIONS
+.TP 
+\fB\-short\fR, \fB\-\-option1\fR
+option1 command
+.TP 
+\fB\-\-option2\fR
+option2 command
+.TP 
+\fB\-\-option2\fR \fIfile\fR
+.I file
+overrides 
+.I ~/.$PROJECT.conf 
+
+.SH FILES
+.I ~/.$PROJECT.conf
+.RS 
+User configuration file. See
+.BR $PROJECT(5)
+for further details
+
+.SH AUTHOR
+$(whoami)
+.SH "SEE ALSO"
+.BR $PROJECT(5)
+ENDMAN1
+}
+
 clean() {
 	rm -rf $CONFIG_DIR
-	rm -rf $OUTPUT
 	rm -rf $BUILD_DIR
 }
 
@@ -238,7 +288,7 @@ while true ; do
 			echo "--help:                 display help menu
 --prefix=/path/to/dir   set the installation directory  default /usr/local/bin
 --cc=/path/to/compiler  set the C compiler              default /usr/bin/cc
---cflags=\"-Wall -O3\"    set the C compiler flags        default -O2 -Wall -Werror -Wextra
+--cflags=\"-Wall -O3\"    set the C compiler flags        default -O2 -Wall -Wextra -Werror
 --clean                 clean up the config and build directories, regenerate Makefile"
 			exit 0;;
 		--clean) 
@@ -269,10 +319,19 @@ fi
 
 echo "Configuring for $PROJECT-$PROJECT_VER"
 
+mkdir -p $DOCUMENTATION
 mkdir -p $CONFIG_DIR
 mkdir -p $SOURCE_DIR
 mkdir -p $INCLUDE_DIR
 mkdir -p $BUILD_DIR
+
+if [[ $CFLAGS == "" ]]; then
+	CFLAGS="-O2 -Wall -Wextra -Werror"
+fi
+
+if [[ $PROJECT_VER == "" ]]; then
+	PROJECT_VER="0.1.0"
+fi
 
 if [ -f $PREFIX/$PROJECT ]; then
 	echo "Warning: $PREFIX/$PROJECT already exists - suggest changing project name before install"
@@ -281,6 +340,12 @@ fi
 if [ ! -f configure ]; then
 	echo "Copying configure script to $(pwd)"
 	cp $0 configure
+fi
+
+if [ -d "/usr/local/share/man/man1" ]; then
+	MANPATH="/usr/local/share/man/man1"
+else
+	MANPATH=$(manpath | sed -e 's/:.*$//g')
 fi
 
 # Begin dependency/header check 
@@ -298,6 +363,7 @@ ECONFIG
 check_stdc
 create_makefile
 create_accessories
+manpage
 
 check_header "stdio.h"
 check_header "stddef.h"
