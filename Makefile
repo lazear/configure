@@ -7,9 +7,9 @@ export MACHINE  = x86_64-linux-gnu
 export ARCH     = x86_64
 
 # C compiler information
-export CC       = c99
+export CC       = /usr/bin/cc
 export CCVER    = 6.2.0
-export STDC_VER = 199901
+export STDC_VER = 201112
 export CFLAGS   = -O2 -Wall -Werror -Wextra
 
 # Project information
