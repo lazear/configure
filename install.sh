@@ -1,18 +1,18 @@
 #!/bin/bash
 INSTALL=~/bin
-MANPATH=""
 
 chmod +755 configure
 
 if [ ! -d $INSTALL ]; then
 	mkdir -p $INSTALL
 fi
+cp -uv configure $INSTALL/
 
-if [ -d "/usr/local/share/man/man1" ]; then
-	MANPATH="/usr/local/share/man/man1"
-else
-	MANPATH=$(manpath | sed -e 's/:.*$//g')
-fi
+for path in $(manpath | tr ":" "\n"); do
+	if [ -d $path/man1 ]; then
+		cp -uv configure.1 $path/man1
+		break;
+	fi
+done
 
-cp configure $INSTALL/
-cp configure.1 $MANPATH/
+
