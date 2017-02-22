@@ -7,12 +7,13 @@ export MACHINE  = x86_64-linux-gnu
 export ARCH     = x86_64
 
 # C compiler information
-export CC       = /usr/bin/cc
+export CC       = c99
 export CCVER    = 6.2.0
-export STDC_VER = 201112
-export CFLAGS   = -O2 -Wall -Wextra
+export STDC_VER = 199901
+export CFLAGS   = -O2 -Wall -Werror -Wextra
 
 # Project information
+export PREFIX   = /usr/local/bin
 export PROJECT  = configure
 export VERSION  = 0.1.0
 
@@ -34,7 +35,13 @@ clean:
 
 dist: clean
 	@echo "creating distribution archive $(PROJECT)-$(VERSION).tar.gz"
-	@tar -cvf $(PROJECT)-$(VERSION).tar.gz configure $(BUILD) $(SRC_DIR) $(INC_DIR)
+	@tar -cvf $(PROJECT)-$(VERSION).tar.gz configure $(TARGET) $(SOURCE) $(HEADERS)
+
+install: $(TARGET)
+	@echo "installing $(PROJECT) in $(PREFIX)"
+	@cp $(TARGET) $(PREFIX)/$(PROJECT)-$(VERSION)
+	@ln $(PREFIX)/$(PROJECT)-$(VERSION) $(PREFIX)/$(PROJECT) 
+
 
 %.o: %.c
 	@echo "cc $<"
