@@ -243,9 +243,7 @@ option2 command
 .TP 
 \fB\-\-option2\fR \fIfile\fR
 .I file
-overrides 
-.I ~/.$PROJECT.conf 
-
+does what
 .SH FILES
 .I ~/.$PROJECT.conf
 .RS 

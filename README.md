@@ -12,14 +12,20 @@
 I like messing around with lots of little projects, and I wanted some way to standardize my build process between all of them, yet found autotools to be more than what I needed or wanted.
 
 ### How?
+To install configure and it's documentation, simply run `sudo ./install.sh`, which copies configure to ~/bin and it's man page to the appropriate location.
+
+After installation, to set up a new project simply do the following:
+
 ```
 mkdir my-project
-./configure
+cd my-project
+configure
 ```
 The project name and build target will default to my-project-0.1.0, and generate the following directory tree:
 ```
 ./.config/
 ./build/
+./docs/    --\ my-project.1 (skeleton man page)
 ./src/
 ./include/
            --\ configure.h (conditional defines and tests)
