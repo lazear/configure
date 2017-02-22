@@ -134,13 +134,16 @@ clean:
 
 dist: $(TARGET) 
 	@echo "creating distribution archive $(PROJECT)-$(VERSION).tar.gz"
-	@tar -czvf $(PROJECT)-$(VERSION).tar.gz configure Makefile $(TARGET) $(SOURCE) $(HEADERS)
-
+	if [ -d $(DOCS) ]; then \
+		tar -czvf $(PROJECT)-$(VERSION).tar.gz configure Makefile $(wildcard $(DOCS)/*) $(TARGET) $(SOURCE) $(HEADERS); \
+	else \
+		tar -czvf $(PROJECT)-$(VERSION).tar.gz configure Makefile $(TARGET) $(SOURCE) $(HEADERS); \
+	fi 
 install: $(TARGET)
 	@echo "installing $(PROJECT) in $(PREFIX)"
 	@cp -uv $(TARGET) $(PREFIX)/$(PROJECT)-$(VERSION)
 	@chmod 0755 $(PREFIX)/$(PROJECT)-$(VERSION)
-	@ln -s $(PREFIX)/$(PROJECT)-$(VERSION) $(PREFIX)/$(PROJECT) 
+	@ln -sf $(PREFIX)/$(PROJECT)-$(VERSION) $(PREFIX)/$(PROJECT) 
 	if [ -f $(DOCS)/$(PROJECT).1 ]; then \
 		cp $(DOCS)/$(PROJECT).1 $(MANPATH); \
 	fi;
@@ -156,10 +159,9 @@ uninstall:
 	fi
 
 upgrade:
-	@rm -rf $(PREFIX)/$(PROJECT)
 	@cp -uv $(TARGET) $(PREFIX)/$(PROJECT)-$(VERSION)
 	@cp -uv $(DOCS)/$(PROJECT).1 $(MANPATH)/$(PROJECT).1
-	@ln -s $(PREFIX)/$(PROJECT)-$(VERSION) $(PREFIX)/$(PROJECT) 
+	@ln -sf $(PREFIX)/$(PROJECT)-$(VERSION) $(PREFIX)/$(PROJECT) 
 
 %.o: %.c
 	@echo "cc $<"
