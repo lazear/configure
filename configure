@@ -286,7 +286,7 @@ while true ; do
 			echo "--help:                 display help menu
 --prefix=/path/to/dir   set the installation directory  default /usr/local/bin
 --cc=/path/to/compiler  set the C compiler              default /usr/bin/cc
---cflags=\"-Wall -O3\"    set the C compiler flags        default -O2 -Wall -Wextra -Werror
+--cflags=\"-Wall -O3\"    set the C compiler flags        default -O2 -Wall -Wextra -Werror -I $INCLUDE_DIR
 --clean                 clean up the config and build directories, regenerate Makefile"
 			exit 0;;
 		--clean) 
@@ -317,14 +317,27 @@ fi
 
 echo "Configuring for $PROJECT-$PROJECT_VER"
 
+if [ ! -d $SOURCE_DIR ]; then
+	mkdir -p $SOURCE_DIR
+	cat << HELLOWORLD > $SOURCE_DIR/$PROJECT.c
+#include <stdio.h>
+#include <stdlib.h>
+#include "configure.h"
+
+int main(void) {
+	printf("Hello world brought to you by %s\n", CONFIGURE_NAME);
+	return EXIT_SUCCESS;
+}
+HELLOWORLD
+fi
+
 mkdir -p $DOCUMENTATION
 mkdir -p $CONFIG_DIR
-mkdir -p $SOURCE_DIR
 mkdir -p $INCLUDE_DIR
 mkdir -p $BUILD_DIR
 
 if [[ $CFLAGS == "" ]]; then
-	CFLAGS="-O2 -Wall -Wextra -Werror"
+	CFLAGS="-O2 -Wall -Wextra -Werror -I$INCLUDE_DIR"
 fi
 
 if [[ $PROJECT_VER == "" ]]; then
