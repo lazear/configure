@@ -125,9 +125,12 @@ export SOURCE   = $(wildcard $(SRC_DIR)/*.c)
 export OBJECTS  = $(SOURCE:.c=.o)
 export TARGET   = $(BUILD)/$(PROJECT)
 
-.PHONY: all clean dist install uninstall upgrade
+.PHONY: all clean dist install uninstall upgrade run
 
 all: $(TARGET)
+
+run: $(TARGET)
+	$(TARGET)
 
 clean:
 	@rm -rf $(OBJECTS)
@@ -135,9 +138,9 @@ clean:
 dist: $(TARGET) clean 
 	@echo "creating distribution archive $(PROJECT)-$(VERSION).tar.gz"
 	if [ -d $(DOCS) ]; then \
-		tar -czvf $(PROJECT)-$(VERSION).tar.gz configure Makefile $(DOCS) $(TARGET) $(SRC_DIR) $(IN_DIR); \
+		tar -czvf $(PROJECT)-$(VERSION).tar.gz configure Makefile LICENSE README.md $(DOCS) $(TARGET) $(SRC_DIR) $(IN_DIR); \
 	else \
-		tar -czvf $(PROJECT)-$(VERSION).tar.gz configure Makefile $(TARGET) $(SRC_DIR) $(INC_DIR); \
+		tar -czvf $(PROJECT)-$(VERSION).tar.gz configure Makefile LICENSE README.md $(TARGET) $(SRC_DIR) $(INC_DIR); \
 	fi 
 install: $(TARGET)
 	@echo "installing $(PROJECT) in $(PREFIX)"
@@ -338,8 +341,16 @@ if [ ! -d $SOURCE_DIR ]; then
 #include <stdlib.h>
 #include "configure.h"
 
-int main(void) {
-	printf("Hello world brought to you by %s\n", CONFIGURE_NAME);
+void usage()
+{
+
+}
+
+int main(int argc, char** argv) {
+	printf("%s\n", argv[0]);
+	if (argc == 0)
+		usage();
+
 	return EXIT_SUCCESS;
 }
 HELLOWORLD
@@ -403,5 +414,6 @@ check_header "stdio.h"
 check_header "stddef.h"
 check_header "stdint.h"
 check_header "stdlib.h"
+check_header "ctype.h"
 
 printf "\n#endif" >> $CONFIG_HEADER
